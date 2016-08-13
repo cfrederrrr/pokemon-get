@@ -1,0 +1,7 @@
+{
+  "server"  : "http://127.0.0.1",
+  "port"    : 63637,
+  "pokedex" : "/etc/pokemon-get/data",
+  "delay"   : 10,
+  "logfile" : "/var/log/pokemon-get/pokemon-get.log"
+}

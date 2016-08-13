@@ -1,0 +1,6 @@
+[Unit]
+Description=Data parsing mechanism for Pokemon GO API server
+After=network.target
+
+[Service]
+ExecStart=/usr/local/rvm/rubies/ruby-2.3.0/bin/ruby /opt/pokemon-get/pokemon-get.rb -c /etc/pokemon-get/pokemon-conf.json
