@@ -6,23 +6,6 @@ require 'logger'
 class Pokemon
   attr_reader :data
   def initialize(data)
-=begin
-    @data = {
-
-      :encounter_id    => data[:encounter_id],
-      :current_time    => Time.now,
-      :disappear_time  => {
-        :epoch => data[:disappear_time],
-        :human => Time.at(data[:disappear_time]/1000)
-      },
-      :latitude        => data[:latitude],
-      :longitude       => data[:longitude],
-      :pokemon_id      => data[:pokemon_id],
-      :pokemon_name    => data[:pokemon_name],
-      :spawnpoint_id   => data[:spawnpoint_id]
-    }
-=end
-
     @data = data
     @data[:disappear_time] = {:epoch => data[:disappear_time], :human => Time.at(data[:disappear_time]/1000)}
     @data[:current_time] = Time.now
