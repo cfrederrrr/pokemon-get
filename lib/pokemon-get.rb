@@ -6,19 +6,26 @@ require 'logger'
 class Pokemon
   attr_reader :data
   def initialize(data)
+=begin
     @data = {
-      :encounter_id    => data['encounter_id'],
+
+      :encounter_id    => data[:encounter_id],
       :current_time    => Time.now,
       :disappear_time  => {
-        :epoch => data['disappear_time'],
-        :human => Time.at(data['disappear_time']/1000)
+        :epoch => data[:disappear_time],
+        :human => Time.at(data[:disappear_time]/1000)
       },
-      :latitude        => data['latitude'],
-      :longitude       => data['longitude'],
-      :pokemon_id      => data['pokemon_id'],
-      :pokemon_name    => data['pokemon_name'],
-      :spawnpoint_id   => data['spawnpoint_id']
+      :latitude        => data[:latitude],
+      :longitude       => data[:longitude],
+      :pokemon_id      => data[:pokemon_id],
+      :pokemon_name    => data[:pokemon_name],
+      :spawnpoint_id   => data[:spawnpoint_id]
     }
+=end
+
+    @data = data
+    @data[:disappear_time] = {:epoch => data[:disappear_time], :human => Time.at(data[:disappear_time]/1000)}
+    @data[:current_time] = Time.now
   end
 end
 
@@ -33,7 +40,7 @@ class PokeClient
 
   def get_encounters(file)
     File.readlines(file).each do |event|
-      @@encounters << JSON.load(event)['encounter_id']
+      @@encounters << JSON.parse(event)['encounter_id']
     end
   end
 
@@ -44,12 +51,11 @@ class PokeClient
   def get_pokemon
     @pokemons = []
     data = @http.request @request
-    JSON.load(data.body)['pokemons'].each do |pokespawn|
-      if @@encounters.include? pokespawn['encounter_id']
+    JSON.parse(data.body, {:symbolize_names => true})[:pokemons].each do |pokespawn|
+      if @@encounters.include? pokespawn[:encounter_id]
         next
       else
-        $LOG.info "new encounter: " + pokespawn['encounter_id']
-        @@encounters << pokespawn['encounter_id']
+        @@encounters << pokespawn[:encounter_id]
         @pokemons << Pokemon.new(pokespawn)
       end
     end
@@ -66,11 +72,11 @@ class PokeDex
     open_file
   end
 
-  def write(data)
+  def write(pokemons)
     open_file
 
-    data.each do |pokemon|
-      @pokelog.puts pokemon.data.to_json unless pokemon.data.empty?
+    pokemons.each do |pokemon|
+      @pokelog.puts pokemon::data.to_json
     end
 
     @pokelog.close
@@ -97,7 +103,8 @@ class PokemonGET
       :server  => '127.0.0.1',
       :port    => 5000,
       :pokedex => '/var/log/pokemon',
-      :delay   => 60
+      :delay   => 60,
+      :loglevel => 'warn'
     }
 
     ARGV << '-h' if ARGV.empty?
@@ -148,11 +155,17 @@ class PokemonGET
 
       begin
         write_tries += 1
-        pokemon_get::pokedex.write new_pokemon
+        pokemon_get::pokedex.write new_pokemon if new_pokemon.any?
       rescue Exception => error_writing
         $LOG.error error_writing
         write_tries = 0
         write_exceptions += 1
+      end
+
+      if pokemon_get::opts[:loglevel].downcase == 'info'
+        new_pokemon.each do |pokemon|
+          $LOG.info "new encounter: " + pokemon::data[:encounter_id]
+        end
       end
 
       if get_tries >= 5 || write_tries >= 5
